@@ -500,3 +500,34 @@ def compute_metrics(train, models):
         results["Log-loss"].append(metrics["Log-loss"](y_true, y_pred))
 
     return results
+
+def get_confusion_table(ytrue, ypred, cutoff):
+    """
+    Compute a confusion table and display the percentage of misclassified observations.
+
+    Parameters:
+    -----------
+    ytrue : pd.Series
+        A pandas Series containing the true binary labels (0 or 1) for the observations.
+    ypred : pd.Series
+        A pandas Series containing the predicted probabilities or scores for the observations.
+    cutoff : float
+        A threshold value used to convert predicted probabilities into binary predictions.
+
+    Returns:
+    --------
+    confusion_table : pd.DataFrame
+        A pandas crosstab showing the confusion table, where:
+        - Rows represent the actual classes (0 or 1).
+        - Columns represent the predicted classes (0 or 1).
+
+    Prints:
+    -------
+    str
+        The name of the ypred Series and the percentage of misclassified observations 
+        based on the cutoff value.
+    """
+    ypred_cat = ypred.apply(lambda x: 1 if x >= cutoff else 0)
+    confusion_table = pd.crosstab(ytrue, ypred_cat)
+    print(f'{ypred.name} confused values for {((confusion_table.iloc[0,1]+confusion_table.iloc[1,0])/len(ytrue)*100):.2f}% of observations.')
+    return confusion_table
