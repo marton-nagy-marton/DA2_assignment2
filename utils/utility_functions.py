@@ -316,6 +316,7 @@ def get_compressed_logit_summary(model, raw_var, raw_name):
     if raw_var in raw_var_types:
         out[raw_name] = (f'{model.get_margeff().margeff[model_vars.index(raw_var)-1]:.3f}'
                          + assign_stars(model.get_margeff().pvalues[model_vars.index(raw_var)-1]) #the -1 offset is because we do not get a marginal effect for the intercept
+                         + f' ({model.get_margeff().summary_frame().loc[raw_var]['Std. Err.']:.3f})'
                         )
     else:
         out[raw_name] = 'No'
@@ -398,8 +399,9 @@ def get_compressed_ols_summary(model, raw_var, raw_name):
     out = {}
     #simple linear set up
     if raw_var in raw_var_types:
-        out[raw_name] = (f'{model.params[model_vars.index(raw_var)]:.3f}'
-                         + assign_stars(model.pvalues[model_vars.index(raw_var)])
+        out[raw_name] = (f'{model.params[raw_var]:.3f}'
+                         + assign_stars(model.pvalues[raw_var])
+                         + f' ({model.HC1_se[raw_var]:.3f})'
                         )
     else:
         out[raw_name] = 'No'
@@ -496,7 +498,10 @@ def compute_metrics(train, models):
 
         results["R-squared"].append(metrics["R-squared"](y_true, y_pred))
         results["Brier-score"].append(metrics["Brier-score"](y_true, y_pred))
-        results["Pseudo R-squared"].append(metrics["Pseudo R-squared"](model))
+        try:
+            results["Pseudo R-squared"].append(metrics["Pseudo R-squared"](model))
+        except AttributeError: #this happens if we feed an LPM model to the function
+            results["Pseudo R-squared"].append(np.nan)
         results["Log-loss"].append(metrics["Log-loss"](y_true, y_pred))
 
     return results
